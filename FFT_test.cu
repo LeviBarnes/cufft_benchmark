@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
          ( strncmp(argv[1], "-h", 2) == 0) ) {
       std::cout << "Usage: FFT_test <field dimension> <num GPUs>" <<std::endl;
       return 0;
+    } 
     sz = atoi(argv[1]);
   }
   int nx=sz, ny=sz;
@@ -22,6 +23,8 @@ int main(int argc, char** argv) {
     nGPUs = atoi(argv[2]);
     for (size_t qq=0;qq<nGPUs;qq++) whichGPUs[qq]=qq;
   }
+  std::cout << "Transform " << sz << "x" << sz << " image "
+            << "with " << nGPUs << " gpus." << std::endl;
 // Demonstrate how to use CUFFT to perform 3-d FFTs using 2 GPUs
 //
 // cufftCreate() - Create an empty plan
