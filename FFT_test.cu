@@ -7,8 +7,21 @@
 int main(int argc, char** argv) {
 
   int sz = 1024;
-  if (argc > 1) sz = atoi(argv[1]);
+  int nGPUs = 2, whichGPUs[16];
+  whichGPUs[0] = 0; whichGPUs[1] = 1;
+  if (argc > 1) {
+    if ( ( strncmp(argv[1], "--help", 6) == 0) ||
+         ( strncmp(argv[1], "-h", 2) == 0) ) {
+      std::cout << "Usage: FFT_test <field dimension> <num GPUs>" <<std::endl;
+      return 0;
+    sz = atoi(argv[1]);
+  }
   int nx=sz, ny=sz;
+
+  if (argc > 2) {
+    nGPUs = atoi(argv[2]);
+    for (size_t qq=0;qq<nGPUs;qq++) whichGPUs[qq]=qq;
+  }
 // Demonstrate how to use CUFFT to perform 3-d FFTs using 2 GPUs
 //
 // cufftCreate() - Create an empty plan
@@ -17,8 +30,6 @@ int main(int argc, char** argv) {
     if (result != CUFFT_SUCCESS) { printf ("*Create failed\n"); return 0; }
 //
 // cufftXtSetGPUs() - Define which GPUs to use
-    int nGPUs = 2, whichGPUs[2];
-    whichGPUs[0] = 0; whichGPUs[1] = 1;
     result = cufftXtSetGPUs (plan_input, nGPUs, whichGPUs);
     if (result != CUFFT_SUCCESS) { printf ("*XtSetGPUs failed\n"); return 0; }
 //

@@ -100,7 +100,7 @@ ENV LD_LIBRARY_PATH=/usr/local/mvapich2/lib:$LD_LIBRARY_PATH \
 RUN yum install -y git git-lfs && \
     rm -rf /var/cache/yum/*
 
-RUN git clone https://github.com/LeviBarnes/cufft_benchmark && chown -R 9900:9900 cufft_benchmark
+RUN git clone https://github.com/LeviBarnes/cufft_benchmark benchmark && chown -R 9900:9900 benchmark
 
 # FFTW version 3.3.8
 RUN yum install -y \
