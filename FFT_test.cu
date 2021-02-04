@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
       std::cout << "Usage:\n     FFT_test <field dimension> <num GPUs>" <<std::endl;
       return 0;
     } 
-    sz = atoi(argv[1]);
+    if ( argv[1][strlen(argv[1])-1] == 'k') sz = atoi(argv[1])*1024;
+    else sz = atoi(argv[1]);
   }
   int nx=sz, ny=sz;
 
