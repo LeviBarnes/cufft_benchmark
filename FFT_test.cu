@@ -41,16 +41,6 @@ int main(int argc, char** argv) {
     cudaEventCreate(&mem_start);
     cudaEventCreate(&mem_stop);
 
-// Demonstrate how to use CUFFT to perform 3-d FFTs using 2 GPUs
-//
-// cufftCreate() - Create an empty plan
-    cufftHandle plan_input; cufftResult result; 
-    result = cufftCreate(&plan_input);
-    if (result != CUFFT_SUCCESS) { printf ("*Create failed\n"); return 0; }
-//
-// cufftXtSetGPUs() - Define which GPUs to use
-    result = cufftXtSetGPUs (plan_input, nGPUs, whichGPUs);
-    if (result != CUFFT_SUCCESS) { printf ("*XtSetGPUs failed\n"); return 0; }
 //
 // Initialize FFT input data
     size_t worksize[16];
@@ -60,7 +50,19 @@ int main(int argc, char** argv) {
     if (host_data_input == NULL) { printf ("malloc (%ul) failed\n", size_of_data); return 0; }
     host_data_output = (cufftComplex *)malloc(size_of_data);
     if (host_data_output == NULL) { printf ("malloc (%ul, output) failed\n", size_of_data); return 0; }
-    //initialize_3d_data (nx, ny, host_data_input, host_data_output);
+    //initialize_2d_data (nx, ny, host_data_input, host_data_output);
+
+  if (nGPUs > 1) {
+// Demonstrate how to use CUFFT to perform 2-d FFTs using multiple GPUs
+//
+// cufftCreate() - Create an empty plan
+    cufftHandle plan_input; cufftResult result; 
+    result = cufftCreate(&plan_input);
+    if (result != CUFFT_SUCCESS) { printf ("*Create failed\n"); return 0; }
+//
+// cufftXtSetGPUs() - Define which GPUs to use
+    result = cufftXtSetGPUs (plan_input, nGPUs, whichGPUs);
+    if (result != CUFFT_SUCCESS) { printf ("*XtSetGPUs failed\n"); return 0; }
 //
 // cufftMakePlan2d() - Create the plan
     result = cufftMakePlan2d (plan_input, ny, nx, CUFFT_C2C, worksize);
@@ -105,6 +107,62 @@ int main(int argc, char** argv) {
     if (cudaGetLastError()) std::cout << "Uncaught CUDA error. Line " << __LINE__ << std::endl;
 //
 
+    } else { //nGPUs == 1
+    
+// Demonstrate how to use CUFFT to perform 2-d FFTs using multiple GPUs
+//
+// cufftCreate() - Create an empty plan
+    cufftHandle plan_input; cufftResult result; 
+    result = cufftCreate(&plan_input);
+    if (result != CUFFT_SUCCESS) { printf ("*Create failed\n"); return 0; }
+//
+// cufftXtSetGPUs() - Define which GPUs to use
+    result = cufftXtSetGPUs (plan_input, nGPUs, whichGPUs);
+    if (result != CUFFT_SUCCESS) { printf ("*XtSetGPUs failed\n"); return 0; }
+//
+// cufftMakePlan2d() - Create the plan
+    result = cufftMakePlan2d (plan_input, ny, nx, CUFFT_C2C, worksize);
+    if (result != CUFFT_SUCCESS) { printf ("*MakePlan* failed\n"); return 0; }
+//
+// cufftXtMalloc() - Malloc data on multiple GPUs
+    cudaLibXtDesc *device_data_input;
+    result = cufftXtMalloc (plan_input, &device_data_input,
+        CUFFT_XT_FORMAT_INPLACE);
+    if (result != CUFFT_SUCCESS) { printf ("*XtMalloc failed\n"); return 0; }
+    for(size_t dev=0;dev<nGPUs;dev++) { cudaSetDevice(whichGPUs[dev]); cudaDeviceSynchronize(); }
+//
+// cufftXtMemcpy() - Copy data from host to multiple GPUs
+    cudaSetDevice(0); cudaEventRecord(mem_start);
+    result = cufftXtMemcpy (plan_input, device_data_input,
+        host_data_input, CUFFT_COPY_HOST_TO_DEVICE);
+    if (result != CUFFT_SUCCESS) { printf ("*XtMemcpy failed\n"); return 0; }
+    for(size_t dev=0;dev<nGPUs;dev++) { cudaSetDevice(whichGPUs[dev]); cudaDeviceSynchronize(); }
+//
+// cufftXtExecDescriptorC2C() - Execute FFT on multiple GPUs
+    cudaSetDevice(0); cudaEventRecord(start);
+    result = cufftXtExecDescriptorC2C (plan_input, device_data_input,
+        device_data_input, CUFFT_FORWARD);
+    for(size_t dev=0;dev<nGPUs;dev++) { cudaSetDevice(whichGPUs[dev]); cudaDeviceSynchronize(); }
+    cudaSetDevice(0); cudaEventRecord(stop);
+    if (result != CUFFT_SUCCESS) { printf ("*XtExec* failed\n"); return 0; }
+//
+// cufftXtMemcpy() - Copy data from multiple GPUs to host
+    result = cufftXtMemcpy (plan_input, host_data_output,
+        device_data_input, CUFFT_COPY_DEVICE_TO_HOST);
+    if (result != CUFFT_SUCCESS) { printf ("*XtMemcpy failed\n"); return 0; }
+    cudaSetDevice(0); cudaEventRecord(mem_stop);
+//
+// Print output and check results
+    //int output_return = output_2d_results (nx, ny,
+   //     host_data_input, host_data_output);
+    //if (output_return != 0) { return 0; }
+//
+// cufftXtFree() - Free GPU memory
+    result = cufftXtFree(device_data_input);
+    if (result != CUFFT_SUCCESS) { printf ("*XtFree failed\n"); return 0; }
+    if (cudaGetLastError()) std::cout << "Uncaught CUDA error. Line " << __LINE__ << std::endl;
+//
+    }
 // report timing
 
     cudaSetDevice(0); 
@@ -120,6 +178,7 @@ int main(int argc, char** argv) {
     if (result != CUFFT_SUCCESS) { printf ("*Destroy failed: code\n"); return 0; }
     free(host_data_input); free(host_data_output);
 
+   
 // destroy timers
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
