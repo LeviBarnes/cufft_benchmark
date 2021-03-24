@@ -166,8 +166,15 @@ int main(int argc, char** argv) {
     float elapsed = 0;
     cudaEventElapsedTime(&elapsed, start, stop);
     std::cout << "cufft exec time: " << elapsed << " ms." << std::endl;
+    std::cout << "                  " << ((float) ny) * ((float) nx)/elapsed/1024/1024 << " Mcells/ms." << std::endl;
+    std::cout << "                  " << 5*((float) ny) * ((float) nx)/elapsed << " Mcells/ms." << std::endl;
+    std::cout << "                  " <<
+                 5*(((float) ny) * ((float) nx) * log2(nx) +
+                    ((float) nx) * ((float) ny) * log2(ny))
+                         /elapsed/1024/1024 << " GFLOPS." << std::endl;
+
     cudaEventElapsedTime(&elapsed, mem_start, mem_stop);
-    std::cout << "including memcpy: " << elapsed << " ms." << std::endl;
+    std::cout << "time including memcpy: " << elapsed << " ms." << std::endl;
 // cufftDestroy() - Destroy FFT plan
     result = cufftDestroy(plan_input);
     if (result != CUFFT_SUCCESS) { printf ("*Destroy failed: code\n"); return 0; }
