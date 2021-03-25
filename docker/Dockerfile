@@ -14,16 +14,7 @@
 #   Boost (latest)
 # 
 
-FROM nvidia/cuda:11.1-devel-centos7 AS devel
-
-# Make gnu binaries links
-RUN mv /usr/bin/g++ /usr/bin/g++.4.8.5 && \
-    mv /usr/bin/gcc /usr/bin/gcc.4.8.5 && \
-    mv /usr/bin/gcov /usr/bin/gcov.4.8.5 && \
-    mv /usr/bin/c++ /usr/bin/c++.4.8.5
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++.4.8.5 10 && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc.4.8.5 10 && \
-    update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov.4.8.5 10
+FROM centos:7 AS devel
 
 # Python
 RUN yum install -y \
@@ -123,3 +114,4 @@ ENV INCLUDES="-I/opt/nvidia/hpc_sdk/Linux_x86_64/20.7/math_libs/include/ -I/opt/
     NVIDIA_REQUIRE_CUDA="cuda>=11.0 brand=tesla,driver>=384,driver<385 brand=tesla,driver>=396,driver<397 brand=tesla,driver>=410,driver<411" \
     NVIDIA_VISIBLE_DEVICES=all
 
+WORKDIR /benchmark
