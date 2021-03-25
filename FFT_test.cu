@@ -167,7 +167,6 @@ int main(int argc, char** argv) {
     cudaEventElapsedTime(&elapsed, start, stop);
     std::cout << "cufft exec time: " << elapsed << " ms." << std::endl;
     std::cout << "                  " << ((float) ny) * ((float) nx)/elapsed/1024/1024 << " Mcells/ms." << std::endl;
-    std::cout << "                  " << 5*((float) ny) * ((float) nx)/elapsed << " Mcells/ms." << std::endl;
     std::cout << "                  " <<
                  5*(((float) ny) * ((float) nx) * log2(nx) +
                     ((float) nx) * ((float) ny) * log2(ny))
